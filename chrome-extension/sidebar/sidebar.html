@@ -1,0 +1,40 @@
+<div id="tp-sidebar">
+  <button id="tp-toggle-btn" title="Toggle Thinking Probe">
+    <svg id="tp-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 3L5 7L9 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div id="tp-panel">
+    <div id="tp-header">
+      <span id="tp-title">Thinking Probe</span>
+      <span id="tp-spinner" hidden>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="tp-spin">
+          <circle cx="7" cy="7" r="5.5" stroke="#ccc" stroke-width="1.5"/>
+          <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+    </div>
+
+    <div id="tp-status">Watching for writing pauses…</div>
+
+    <div id="tp-question-area" hidden>
+      <div id="tp-passage-label">Passage in question</div>
+      <blockquote id="tp-passage"></blockquote>
+      <div id="tp-question"></div>
+      <textarea id="tp-response" placeholder="Your thoughts…" rows="4"></textarea>
+      <button id="tp-submit-btn">Submit</button>
+    </div>
+
+    <div id="tp-edit-area" hidden>
+      <div id="tp-suggestion-label">Suggested revision</div>
+      <div id="tp-suggestion"></div>
+      <div id="tp-edit-actions">
+        <button id="tp-accept-btn">Accept</button>
+        <button id="tp-dismiss-btn">Dismiss</button>
+      </div>
+    </div>
+
+    <div id="tp-toast" hidden></div>
+  </div>
+</div>

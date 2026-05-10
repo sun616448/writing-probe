@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Thinking Probe",
+  "version": "1.0.0",
+  "description": "Socratic writing coach for Google Docs — surfaces questions that probe the quality of your thinking.",
+  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "host_permissions": [
+    "https://docs.google.com/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/document/*"],
+      "js": [
+        "utils/debounce.js",
+        "content.js",
+        "sidebar/sidebar.js"
+      ],
+      "css": ["sidebar/sidebar.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/options.html",
+  "action": {
+    "default_title": "Thinking Probe",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["sidebar/sidebar.html"],
+      "matches": ["https://docs.google.com/*"]
+    }
+  ]
+}

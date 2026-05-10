@@ -1,0 +1,232 @@
+/* Thinking Probe — margin comment style, injected into Google Docs page */
+
+#tp-sidebar-container {
+  position: fixed;
+  top: 72px;
+  right: 12px;
+  width: 252px;
+  z-index: 99999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#tp-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* ---- Toggle button ---- */
+#tp-toggle-btn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #666;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+#tp-toggle-btn:hover {
+  background: #f5f5f5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.13);
+}
+
+
+/* ---- Panel — transparent wrapper, just provides collapse animation ---- */
+#tp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.2s ease;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding-right: 2px; /* leave room for scrollbar */
+}
+
+#tp-sidebar.collapsed #tp-panel {
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  max-height: 0;
+}
+
+/* ---- Spinner ---- */
+#tp-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+}
+
+#tp-title { display: none; }
+
+.tp-spin { animation: tp-spin 0.9s linear infinite; }
+@keyframes tp-spin { to { transform: rotate(360deg); } }
+
+/* ---- Status line ---- */
+#tp-status {
+  font-size: 11px;
+  color: #bbb;
+  padding: 0 2px;
+}
+#tp-status:empty { display: none; }
+
+/* ---- Probe card list ---- */
+#tp-probes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- Individual probe card — Google Docs comment aesthetic ---- */
+.tp-probe-card {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  border-left: 3px solid #f5c518;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06);
+  padding: 10px 12px 10px 11px;
+  transition: box-shadow 0.12s;
+}
+.tp-probe-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.tp-card-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: color 0.1s, background 0.1s;
+}
+.tp-card-close:hover { color: #555; background: #f0f0f0; }
+
+.tp-card-passage {
+  margin: 0 18px 8px 0;
+  padding: 5px 8px;
+  background: #fffbec;
+  border-left: 2px solid #f5c518;
+  border-radius: 0 3px 3px 0;
+  font-size: 11px;
+  color: #666;
+  font-style: italic;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.tp-card-question {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  padding-right: 16px;
+}
+
+.tp-card-response {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  resize: none;
+  min-height: 56px;
+  outline: none;
+  color: #1a1a1a;
+  line-height: 1.45;
+  transition: border-color 0.12s;
+  box-sizing: border-box;
+  background: #fafafa;
+}
+.tp-card-response:focus { border-color: #aaa; background: #fff; }
+
+.tp-card-submit {
+  margin-top: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.tp-card-submit:hover { background: #333; }
+.tp-card-submit:disabled { background: #ccc; cursor: default; }
+
+.tp-card-suggestion-area { margin-top: 8px; }
+
+.tp-card-suggestion {
+  font-size: 12px;
+  color: #1a1a1a;
+  line-height: 1.5;
+  padding: 7px 9px;
+  background: #f0f7f0;
+  border-left: 2px solid #4caf50;
+  border-radius: 0 4px 4px 0;
+  word-break: break-word;
+  margin-bottom: 7px;
+}
+
+.tp-card-edit-actions { display: flex; gap: 5px; }
+
+.tp-card-accept,
+.tp-card-dismiss-edit {
+  flex: 1;
+  padding: 5px 7px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid #d0d0d0;
+  transition: background 0.1s;
+}
+.tp-card-accept { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.tp-card-accept:hover { background: #333; border-color: #333; }
+.tp-card-dismiss-edit { background: #fff; color: #555; }
+.tp-card-dismiss-edit:hover { background: #f5f5f5; }
+
+/* ---- Toast ---- */
+#tp-toast {
+  padding: 7px 10px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+  font-size: 11px;
+  color: #444;
+  line-height: 1.4;
+  border-left: 3px solid #4caf50;
+}
