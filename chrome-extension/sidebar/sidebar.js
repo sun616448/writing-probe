@@ -22,6 +22,7 @@
 function setupSidebar() {
   const sidebar = document.getElementById('tp-sidebar');
   const toggleBtn = document.getElementById('tp-toggle-btn');
+  const refreshBtn = document.getElementById('tp-refresh-btn');
   const statusEl = document.getElementById('tp-status');
   const spinner = document.getElementById('tp-spinner');
   const probesList = document.getElementById('tp-probes-list');
@@ -35,12 +36,16 @@ function setupSidebar() {
     }
   });
 
+  // --- Refresh: clear probed state and trigger a fresh scan ---
+  refreshBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ type: 'PROBE_REFRESH' }, () => void chrome.runtime.lastError);
+  });
+
   // --- Toggle panel ---
   toggleBtn.addEventListener('click', () => {
     isCollapsed = !isCollapsed;
     sidebar.classList.toggle('collapsed', isCollapsed);
-    toggleBtn.textContent = isCollapsed ? 'Show' : 'Hide';
-    toggleBtn.title = isCollapsed ? 'Show Thinking Probe' : 'Hide Thinking Probe';
+    toggleBtn.textContent = isCollapsed ? 'show' : 'hide';
   });
 
   // --- Probes ready: render card list ---
@@ -52,6 +57,7 @@ function setupSidebar() {
     if (isCollapsed) {
       isCollapsed = false;
       sidebar.classList.remove('collapsed');
+      toggleBtn.textContent = 'hide';
     }
   });
 

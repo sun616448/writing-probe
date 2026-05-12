@@ -1,10 +1,10 @@
-/* Thinking Probe — margin comment style, injected into Google Docs page */
+/* Thinking Probe sidebar — injected into Google Docs */
 
 #tp-sidebar-container {
   position: fixed;
   top: 72px;
-  right: 12px;
-  width: 252px;
+  right: 16px;
+  width: 264px;
   z-index: 99999;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
@@ -16,74 +16,95 @@
 }
 
 #tp-sidebar {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
   pointer-events: auto;
 }
 
-/* ---- Toggle button ---- */
-#tp-toggle-btn {
-  align-self: flex-start;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px 4px 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 20px;
-  cursor: pointer;
-  color: #666;
-  font-size: 11px;
-  font-family: inherit;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  transition: background 0.12s, box-shadow 0.12s;
-}
-#tp-toggle-btn:hover {
-  background: #f5f5f5;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.13);
-}
-
-
-/* ---- Panel — transparent wrapper, just provides collapse animation ---- */
+/* ---- Panel shell ---- */
 #tp-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: opacity 0.2s ease;
-  overflow-y: auto;
-  max-height: calc(100vh - 120px);
-  padding-right: 2px; /* leave room for scrollbar */
-}
-
-#tp-sidebar.collapsed #tp-panel {
-  opacity: 0;
-  pointer-events: none;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.06);
   overflow: hidden;
-  max-height: 0;
 }
 
-/* ---- Spinner ---- */
+/* ---- Header ---- */
 #tp-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 18px;
+  gap: 5px;
+  padding: 9px 12px 8px;
+  border-bottom: 1px solid #f0ede8;
 }
 
-#tp-title { display: none; }
+#tp-title {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #999;
+  flex: 1;
+}
 
-.tp-spin { animation: tp-spin 0.9s linear infinite; }
+#tp-header-sep {
+  font-size: 11px;
+  color: #d0ccc6;
+}
+
+#tp-refresh-btn {
+  background: none;
+  border: none;
+  color: #c8c3bc;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  transition: color 0.12s, transform 0.35s ease;
+  margin-right: 2px;
+}
+#tp-refresh-btn:hover { color: #555; }
+#tp-refresh-btn:active { transform: rotate(180deg); }
+
+#tp-toggle-btn {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.03em;
+  transition: color 0.12s;
+}
+#tp-toggle-btn:hover { color: #555; }
+
+/* ---- Spinner ---- */
+.tp-spin { animation: tp-spin 0.85s linear infinite; }
 @keyframes tp-spin { to { transform: rotate(360deg); } }
+
+/* ---- Collapsible content ---- */
+#tp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  padding: 10px 10px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #e0ddd8 transparent;
+}
+
+#tp-sidebar.collapsed #tp-content {
+  display: none;
+}
 
 /* ---- Status line ---- */
 #tp-status {
   font-size: 11px;
-  color: #bbb;
+  color: #c0bbb4;
   padding: 0 2px;
+  line-height: 1.4;
 }
 #tp-status:empty { display: none; }
 
@@ -91,32 +112,36 @@
 #tp-probes-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
+  margin-top: 8px;
 }
+#tp-probes-list:empty { margin-top: 0; }
 
-/* ---- Individual probe card — Google Docs comment aesthetic ---- */
+/* ---- Individual probe card ---- */
 .tp-probe-card {
   position: relative;
-  background: #fff;
-  border-radius: 8px;
-  border-left: 3px solid #f5c518;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06);
-  padding: 10px 12px 10px 11px;
-  transition: box-shadow 0.12s;
+  background: #fefefe;
+  border-radius: 7px;
+  border: 1px solid #eae7e1;
+  border-left: 3px solid #dfc044;
+  padding: 10px 12px 11px 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .tp-probe-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08);
+  border-color: #d8d3cb;
+  border-left-color: #dfc044;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .tp-card-close {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 7px;
+  right: 7px;
   width: 18px;
   height: 18px;
   background: none;
   border: none;
-  color: #ccc;
+  color: #d0ccc6;
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
@@ -124,109 +149,123 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: color 0.1s, background 0.1s;
 }
-.tp-card-close:hover { color: #555; background: #f0f0f0; }
+.tp-card-close:hover { color: #555; background: #f0ede8; }
 
 .tp-card-passage {
-  margin: 0 18px 8px 0;
-  padding: 5px 8px;
-  background: #fffbec;
-  border-left: 2px solid #f5c518;
+  margin: 0 20px 9px 0;
+  padding: 4px 8px;
+  background: #fdf8e4;
+  border-left: 2px solid #dfc044;
   border-radius: 0 3px 3px 0;
   font-size: 11px;
-  color: #666;
+  color: #999;
   font-style: italic;
   line-height: 1.45;
   word-break: break-word;
 }
 
 .tp-card-question {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   color: #1a1a1a;
-  line-height: 1.45;
-  margin-bottom: 8px;
-  padding-right: 16px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  padding-right: 14px;
 }
 
 .tp-card-response {
   width: 100%;
-  padding: 6px 8px;
+  padding: 7px 9px;
   font-size: 12px;
   font-family: inherit;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
+  border: 1px solid #e2ddd7;
+  border-radius: 6px;
   resize: none;
   min-height: 56px;
   outline: none;
   color: #1a1a1a;
-  line-height: 1.45;
-  transition: border-color 0.12s;
+  line-height: 1.5;
+  transition: border-color 0.12s, box-shadow 0.12s;
   box-sizing: border-box;
-  background: #fafafa;
+  background: #fff;
 }
-.tp-card-response:focus { border-color: #aaa; background: #fff; }
+.tp-card-response:focus {
+  border-color: #b5afa6;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+.tp-card-response::placeholder { color: #c8c3bc; }
 
 .tp-card-submit {
-  margin-top: 6px;
+  margin-top: 8px;
   width: 100%;
-  padding: 6px 10px;
-  background: #1a1a1a;
+  padding: 7px 10px;
+  background: #1c1c1c;
   color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  letter-spacing: 0.02em;
   transition: background 0.12s;
 }
-.tp-card-submit:hover { background: #333; }
-.tp-card-submit:disabled { background: #ccc; cursor: default; }
+.tp-card-submit:hover { background: #383838; }
+.tp-card-submit:disabled { background: #d5d1cc; cursor: default; }
 
-.tp-card-suggestion-area { margin-top: 8px; }
+/* ---- Suggestion area ---- */
+.tp-card-suggestion-area { margin-top: 10px; }
 
 .tp-card-suggestion {
   font-size: 12px;
   color: #1a1a1a;
-  line-height: 1.5;
-  padding: 7px 9px;
-  background: #f0f7f0;
-  border-left: 2px solid #4caf50;
-  border-radius: 0 4px 4px 0;
+  line-height: 1.55;
+  padding: 8px 10px;
+  background: #f2f8f2;
+  border-left: 2px solid #62a862;
+  border-radius: 0 5px 5px 0;
   word-break: break-word;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
 }
 
-.tp-card-edit-actions { display: flex; gap: 5px; }
+.tp-card-edit-actions { display: flex; gap: 6px; }
 
 .tp-card-accept,
 .tp-card-dismiss-edit {
   flex: 1;
-  padding: 5px 7px;
-  font-size: 11px;
+  padding: 6px 8px;
+  font-size: 11.5px;
   font-family: inherit;
   font-weight: 500;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  border: 1px solid #d0d0d0;
-  transition: background 0.1s;
+  transition: background 0.1s, border-color 0.1s;
+  letter-spacing: 0.01em;
 }
-.tp-card-accept { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-.tp-card-accept:hover { background: #333; border-color: #333; }
-.tp-card-dismiss-edit { background: #fff; color: #555; }
-.tp-card-dismiss-edit:hover { background: #f5f5f5; }
+.tp-card-accept {
+  background: #1c1c1c;
+  color: #fff;
+  border: 1px solid #1c1c1c;
+}
+.tp-card-accept:hover { background: #383838; border-color: #383838; }
+.tp-card-dismiss-edit {
+  background: #fff;
+  color: #777;
+  border: 1px solid #e2ddd7;
+}
+.tp-card-dismiss-edit:hover { background: #f5f2ee; }
 
 /* ---- Toast ---- */
 #tp-toast {
-  padding: 7px 10px;
-  background: #fff;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #f2f8f2;
   border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.14);
   font-size: 11px;
-  color: #444;
-  line-height: 1.4;
-  border-left: 3px solid #4caf50;
+  color: #4a644a;
+  line-height: 1.45;
+  border-left: 2px solid #62a862;
 }

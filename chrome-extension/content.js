@@ -116,18 +116,28 @@
 
     const spinner = el('span', { id: 'tp-spinner', hidden: '' }, spinnerSvg);
 
+    const refreshSvg = svg('svg', { width: '11', height: '11', viewBox: '0 0 14 14', fill: 'none', id: 'tp-refresh-icon' },
+      svg('path', {
+        d: 'M2.5 7A4.5 4.5 0 1 0 4.2 3.2M2.5 7V3.8M2.5 7H5.8',
+        stroke: 'currentColor', 'stroke-width': '1.6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      })
+    );
+    const refreshBtn = el('button', { id: 'tp-refresh-btn', title: 'Generate new insights' }, refreshSvg);
+
     return el('div', { id: 'tp-sidebar' },
-      el('button', { id: 'tp-toggle-btn', title: 'Hide Thinking Probe' },
-        document.createTextNode('Hide')
-      ),
       el('div', { id: 'tp-panel' },
         el('div', { id: 'tp-header' },
-          el('span', { id: 'tp-title' }),
-          spinner
+          el('span', { id: 'tp-title' }, 'Writing Probe'),
+          spinner,
+          refreshBtn,
+          el('span', { id: 'tp-header-sep' }, '·'),
+          el('button', { id: 'tp-toggle-btn' }, 'hide')
         ),
-        el('div', { id: 'tp-status' }),
-        el('div', { id: 'tp-probes-list' }),
-        el('div', { id: 'tp-toast', hidden: '' })
+        el('div', { id: 'tp-content' },
+          el('div', { id: 'tp-status' }),
+          el('div', { id: 'tp-probes-list' }),
+          el('div', { id: 'tp-toast', hidden: '' })
+        )
       )
     );
   }

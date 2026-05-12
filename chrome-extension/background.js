@@ -11,8 +11,13 @@ const MIN_TOTAL_WORDS = 20;
 const MIN_DELTA_WORDS = 5;
 const MAX_PARA_PROBES = 6;
 
-// Per-tab word-count state for delta tracking
+// Per-tab state: word-count delta tracking + set of already-probed paragraph fingerprints
 const tabState = new Map();
+
+// First 80 chars of a paragraph — stable enough to detect "same paragraph" across triggers
+function paraKey(p) {
+  return p.slice(0, 80);
+}
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -35,10 +40,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  if (message.type === 'RESPONSE_SUBMITTED') {
-    // Reset delta baseline so next typing burst triggers a fresh probe scan
+  if (message.type === 'PROBE_REFRESH') {
     const tabId = sender.tab?.id;
-    if (tabId) tabState.delete(tabId);
+    // Don't clear probedParas — triggerMultiProbe will skip already-seen paragraphs
+    // and auto-reset the cycle only when all paragraphs are exhausted
+    if (tabId) triggerMultiProbe(tabId, true, true);
+    return false;
+  }
+
+  if (message.type === 'RESPONSE_SUBMITTED') {
+    // Reset word-count baseline but keep probedParas — don't re-surface questions the user already saw
+    const tabId = sender.tab?.id;
+    if (tabId) {
+      const prev = tabState.get(tabId);
+      tabState.set(tabId, { lastWordCount: 0, probedParas: prev?.probedParas || new Set() });
+    }
     handleEditSuggestion(message.passage, message.question, message.userResponse, sendResponse);
     return true;
   }
@@ -52,7 +68,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // --- Multi-probe trigger ---
 
-async function triggerMultiProbe(tabId, skipDelta) {
+async function triggerMultiProbe(tabId, skipDelta, replace = !skipDelta) {
   try {
     const raw = await extractDocText(tabId);
 
@@ -66,11 +82,12 @@ async function triggerMultiProbe(tabId, skipDelta) {
     const text = cleanDocText(raw);
     const totalWords = countWords(text);
 
-    const state = tabState.get(tabId) || { lastWordCount: 0 };
+    const state = tabState.get(tabId) || { lastWordCount: 0, probedParas: new Set() };
     if (totalWords < MIN_TOTAL_WORDS) return;
     if (!skipDelta && totalWords - state.lastWordCount < MIN_DELTA_WORDS) return;
 
-    tabState.set(tabId, { lastWordCount: totalWords });
+    state.lastWordCount = totalWords;
+    tabState.set(tabId, state);
     push(tabId, { type: 'PROBE_STARTED' });
 
     const { apiKey } = await chrome.storage.local.get('apiKey');
@@ -80,16 +97,33 @@ async function triggerMultiProbe(tabId, skipDelta) {
       return;
     }
 
-    const paragraphs = extractLastParagraphs(text, MAX_PARA_PROBES);
-    console.log('[TP bg] paragraphs to probe:', paragraphs.length, paragraphs.map(p => p.slice(0, 40)));
+    // Fetch a larger pool so we have unprobed candidates after filtering
+    const allParas = extractLastParagraphs(text, MAX_PARA_PROBES * 3);
+    let newParas = allParas.filter(p => !state.probedParas.has(paraKey(p)));
+
+    // All paragraphs exhausted — reset cycle so refresh keeps rotating through new questions
+    if (newParas.length === 0 && allParas.length > 0) {
+      state.probedParas.clear();
+      newParas = allParas;
+    }
+
+    const paragraphs = newParas.slice(-MAX_PARA_PROBES);
+
+    console.log('[TP bg] paragraphs to probe:', paragraphs.length,
+      '(', allParas.length - paragraphs.length, 'already probed, skipped)');
+
     if (paragraphs.length === 0) {
-      console.log('[TP bg] skipped: no paragraphs with ≥15 words');
+      console.log('[TP bg] skipped: no qualifying paragraphs found');
       return;
     }
 
+    // Mark in-flight immediately — prevents a second concurrent trigger from re-sending the same paragraphs
+    for (const p of paragraphs) state.probedParas.add(paraKey(p));
+
     const probes = await callClaudeForMultiProbe(paragraphs, apiKey);
+
     console.log('[TP bg] probes ready:', probes.length);
-    push(tabId, { type: 'PROBES_READY', probes, replace: !skipDelta });
+    push(tabId, { type: 'PROBES_READY', probes, replace });
   } catch (err) {
     console.error('[TP bg] error:', err);
     push(tabId, { type: 'PROBE_ERROR', error: err.message });
@@ -100,7 +134,7 @@ function extractLastParagraphs(text, maxN) {
   return text
     .split(/\n+/)
     .map(p => p.trim())
-    .filter(p => countWords(p) >= 20)
+    .filter(p => countWords(p) >= 10)
     .slice(-maxN);
 }
 
