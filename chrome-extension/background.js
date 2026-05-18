@@ -3,10 +3,10 @@
 // because Google Docs renders text on canvas; document.execCommand('selectAll') only
 // works correctly when called from the main world (not the content script isolated world).
 
+importScripts('config.js'); // defines API_KEY and MONTHLY_CALL_LIMIT
+
 const PROBE_MODEL = 'claude-haiku-4-5-20251001';
 const EDIT_MODEL = 'claude-sonnet-4-6';
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const API_VERSION = '2023-06-01';
 const MIN_TOTAL_WORDS = 20;
 const MIN_DELTA_WORDS = 5;
 const MAX_PARA_PROBES = 6;
@@ -19,11 +19,30 @@ function paraKey(p) {
   return p.slice(0, 80);
 }
 
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('options/options.html') });
+    const { onboardingDone } = await chrome.storage.local.get('onboardingDone');
+    if (!onboardingDone) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('onboarding/onboarding.html') });
+    }
   }
 });
+
+// --- Usage limit helpers ---
+
+async function getRemainingCalls() {
+  const { usage } = await chrome.storage.local.get('usage');
+  const month = new Date().toISOString().slice(0, 7);
+  if (!usage || usage.month !== month) return MONTHLY_CALL_LIMIT;
+  return Math.max(0, MONTHLY_CALL_LIMIT - usage.count);
+}
+
+async function recordCall() {
+  const { usage } = await chrome.storage.local.get('usage');
+  const month = new Date().toISOString().slice(0, 7);
+  const prev = (usage?.month === month) ? usage : { month, count: 0 };
+  await chrome.storage.local.set({ usage: { month, count: prev.count + 1 } });
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[TP bg] message:', message.type, 'tab:', sender.tab?.id);
@@ -76,6 +95,10 @@ async function triggerMultiProbe(tabId, skipDelta, replace = !skipDelta) {
     // Detect this by checking whether the raw selection contains the screen reader prompt.
     if (raw.includes('Turn on screen reader support')) {
       push(tabId, { type: 'PROBE_ERROR', error: 'need_screen_reader' });
+      const { onboardingDone } = await chrome.storage.local.get('onboardingDone');
+      if (!onboardingDone) {
+        chrome.tabs.create({ url: chrome.runtime.getURL('onboarding/onboarding.html') });
+      }
       return;
     }
 
@@ -90,10 +113,9 @@ async function triggerMultiProbe(tabId, skipDelta, replace = !skipDelta) {
     tabState.set(tabId, state);
     push(tabId, { type: 'PROBE_STARTED' });
 
-    const { apiKey } = await chrome.storage.local.get('apiKey');
-    if (!apiKey) {
-      console.warn('[TP bg] no API key');
-      push(tabId, { type: 'PROBE_ERROR', error: 'no_api_key' });
+    const remaining = await getRemainingCalls();
+    if (remaining <= 0) {
+      push(tabId, { type: 'PROBE_ERROR', error: 'limit_reached' });
       return;
     }
 
@@ -120,7 +142,7 @@ async function triggerMultiProbe(tabId, skipDelta, replace = !skipDelta) {
     // Mark in-flight immediately — prevents a second concurrent trigger from re-sending the same paragraphs
     for (const p of paragraphs) state.probedParas.add(paraKey(p));
 
-    const probes = await callClaudeForMultiProbe(paragraphs, apiKey);
+    const probes = await callClaudeForMultiProbe(paragraphs);
 
     console.log('[TP bg] probes ready:', probes.length);
     push(tabId, { type: 'PROBES_READY', probes, replace });
@@ -178,7 +200,7 @@ function push(tabId, message) {
 const PROBE_SYSTEM =
   'You are a Socratic writing coach. Given paragraphs from a writer\'s draft, generate one focused probe question per paragraph — the question a sharp colleague would ask: "wait, have you actually thought about...?" Questions must be specific to the text (never generic), under 25 words each.';
 
-async function callClaudeForMultiProbe(paragraphs, apiKey) {
+async function callClaudeForMultiProbe(paragraphs) {
   const paragraphsText = paragraphs
     .map((p, i) => `<paragraph index="${i + 1}">\n${p}\n</paragraph>`)
     .join('\n\n');
@@ -186,7 +208,7 @@ async function callClaudeForMultiProbe(paragraphs, apiKey) {
   const userPrompt =
     `Here are ${paragraphs.length} paragraph(s) from the writer's draft. Generate one probe question per paragraph.\n\n${paragraphsText}\n\nRespond ONLY as a JSON array:\n[\n  { "passage": "key phrase or sentence to highlight (max 2 sentences)", "question": "your probe question" },\n  ...\n]`;
 
-  const result = await callClaude(PROBE_MODEL, PROBE_SYSTEM, userPrompt, apiKey);
+  const result = await callClaude(PROBE_MODEL, PROBE_SYSTEM, userPrompt);
 
   const jsonMatch = result.match(/\[[\s\S]*\]/);
   if (!jsonMatch) throw new Error('No JSON array in response');
@@ -200,9 +222,9 @@ async function callClaudeForMultiProbe(paragraphs, apiKey) {
 // --- Edit suggestion generation (Claude Sonnet) ---
 
 async function handleEditSuggestion(passage, question, userResponse, sendResponse) {
-  const { apiKey } = await chrome.storage.local.get('apiKey');
-  if (!apiKey) {
-    sendResponse({ type: 'EDIT_ERROR', error: 'no_api_key' });
+  const remaining = await getRemainingCalls();
+  if (remaining <= 0) {
+    sendResponse({ type: 'EDIT_ERROR', error: 'limit_reached' });
     return;
   }
 
@@ -210,7 +232,7 @@ async function handleEditSuggestion(passage, question, userResponse, sendRespons
     `A writer was asked to examine the following passage from their work:\n\n<passage>\n${passage}\n</passage>\n\nThe probe question was:\n"${question}"\n\nThe writer's response was:\n"${userResponse}"\n\nBased on the writer's response, suggest a concrete revision to the passage that incorporates their refined thinking. Return ONLY the revised passage text — no preamble, no explanation. Match the writer's existing tone and style.`;
 
   try {
-    const result = await callClaude(EDIT_MODEL, null, userPrompt, apiKey);
+    const result = await callClaude(EDIT_MODEL, null, userPrompt);
     sendResponse({ type: 'EDIT_READY', suggestion: result.trim() });
   } catch (err) {
     sendResponse({ type: 'EDIT_ERROR', error: err.message });
@@ -219,7 +241,7 @@ async function handleEditSuggestion(passage, question, userResponse, sendRespons
 
 // --- Shared Claude API fetch ---
 
-async function callClaude(model, systemPrompt, userPrompt, apiKey) {
+async function callClaude(model, systemPrompt, userPrompt) {
   const body = {
     model,
     max_tokens: 1024,
@@ -227,13 +249,11 @@ async function callClaude(model, systemPrompt, userPrompt, apiKey) {
   };
   if (systemPrompt) body.system = systemPrompt;
 
-  const res = await fetch(API_URL, {
+  const res = await fetch(WORKER_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': API_VERSION,
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'x-probe-secret': PROBE_SECRET,
     },
     body: JSON.stringify(body),
   });
@@ -244,5 +264,6 @@ async function callClaude(model, systemPrompt, userPrompt, apiKey) {
   }
 
   const data = await res.json();
+  await recordCall();
   return data.content[0].text;
 }

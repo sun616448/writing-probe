@@ -6,7 +6,7 @@
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [
     "https://docs.google.com/*",
-    "https://api.anthropic.com/*"
+    "https://*.workers.dev/*"
   ],
   "background": {
     "service_worker": "background.js"

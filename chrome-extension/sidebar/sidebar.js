@@ -30,12 +30,6 @@ function setupSidebar() {
 
   let isCollapsed = false;
 
-  chrome.storage.local.get('apiKey', ({ apiKey }) => {
-    if (!apiKey) {
-      setStatus('Add your API key in the extension options to get started.');
-    }
-  });
-
   // --- Refresh: clear probed state and trigger a fresh scan ---
   refreshBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ type: 'PROBE_REFRESH' }, () => void chrome.runtime.lastError);
@@ -71,8 +65,8 @@ function setupSidebar() {
   document.addEventListener('tp:error', (e) => {
     hideSpinner();
     const { code } = e.detail;
-    if (code === 'no_api_key') {
-      setStatus('Add your API key in the extension options to get started.');
+    if (code === 'limit_reached') {
+      setStatus('Monthly call limit reached. Resets next month.');
     } else if (code === 'need_screen_reader') {
       setStatus('One-time setup needed: in Google Docs open Tools → Accessibility settings → turn on "Screen reader support", then reload this page.');
     } else {
@@ -196,8 +190,8 @@ function setupSidebar() {
           submitBtn.textContent = 'Submit';
 
           if (!response || response.type === 'EDIT_ERROR') {
-            const errMsg = response?.error === 'no_api_key'
-              ? 'Add your API key in the extension options.'
+            const errMsg = response?.error === 'limit_reached'
+              ? 'Monthly call limit reached.'
               : (response?.error || 'Unknown error');
             showToast(`Couldn't generate suggestion: ${errMsg}`);
             return;
