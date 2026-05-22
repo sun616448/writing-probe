@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Thinking Probe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Socratic writing coach for Google Docs — surfaces questions that probe the quality of your thinking.",
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://docs.google.com/*",
     "https://*.workers.dev/*"
